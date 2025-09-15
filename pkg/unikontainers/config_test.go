@@ -52,24 +52,24 @@ func TestGetConfigFromSpec(t *testing.T) {
 			MountRootfs:     "true",
 		}
 
-		config, err := getConfigFromSpec(spec)
-		assert.NoError(t, err, "Expected no error")
+		config := getConfigFromSpec(spec)
 		assert.Equal(t, expectedConfig, config, "Expected config to match")
+		err := config.validate()
+		assert.NoError(t, err, "Expected a full config to be valid")
 	})
 
-	t.Run("get config from spec empty annotations", func(t *testing.T) {
+	t.Run("get config from spec with empty annotations", func(t *testing.T) {
 		t.Parallel()
 		spec := &specs.Spec{
 			Annotations: map[string]string{},
 		}
-
-		config, err := getConfigFromSpec(spec)
-		assert.Error(t, err, "Expected an error")
-		assert.Nil(t, config, "Expected config to be nil")
-		assert.Equal(t, ErrEmptyAnnotations, err, "Expected ErrEmptyAnnotations")
+		config := getConfigFromSpec(spec)
+		assert.NotNil(t, config, "Expected config to be non-nil even with empty annotations")
+		err := config.validate()
+		assert.Error(t, err, "Expected validation to fail for an empty config")
 	})
 
-	t.Run("get config from spec partial annotations", func(t *testing.T) {
+	t.Run("get config from spec with partial (invalid) annotations", func(t *testing.T) {
 		t.Parallel()
 		spec := &specs.Spec{
 			Annotations: map[string]string{
@@ -78,12 +78,21 @@ func TestGetConfigFromSpec(t *testing.T) {
 		}
 
 		expectedConfig := &UnikernelConfig{
-			UnikernelType: "type1",
+			UnikernelType:    "type1",
+			UnikernelVersion: "",
+			UnikernelCmd:     "",
+			UnikernelBinary:  "",
+			Hypervisor:       "",
+			Initrd:           "",
+			Block:            "",
+			BlkMntPoint:      "",
+			MountRootfs:      "",
 		}
 
-		config, err := getConfigFromSpec(spec)
-		assert.NoError(t, err, "Expected no error")
+		config := getConfigFromSpec(spec)
 		assert.Equal(t, expectedConfig, config, "Expected partial config to match")
+		err := config.validate()
+		assert.Error(t, err, "Expected validation to fail for a partial config")
 	})
 }
 
