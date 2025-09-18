@@ -28,6 +28,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/urunc-dev/urunc/pkg/network"
 	"github.com/urunc-dev/urunc/pkg/unikontainers/hypervisors"
@@ -481,7 +482,6 @@ func (u *Unikontainer) Kill() error {
 	if err != nil {
 		return err
 	}
-
 	// Check if pid is running
 	if syscall.Kill(u.State.Pid, syscall.Signal(0)) == nil {
 		err = syscall.Kill(u.State.Pid, unix.SIGKILL)
@@ -489,6 +489,21 @@ func (u *Unikontainer) Kill() error {
 			return err
 		}
 	}
+	const timeout = 2 * time.Second
+	deadline := time.Now().Add(timeout)
+	for {
+		if err := syscall.Kill(u.State.Pid, 0); err != nil {
+			if errors.Is(err, syscall.ESRCH) {
+				break // process is dead
+			}
+			return fmt.Errorf("error checking pid %d: %w", u.State.Pid, err)
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("timeout waiting for pid %d to die", u.State.Pid)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
 	// If PID is running we need to kill the process
 	// Once the process is dead, we need to enter the network namespace
 	// and delete the TC rules and TAP device
