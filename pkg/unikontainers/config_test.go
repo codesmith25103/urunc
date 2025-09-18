@@ -67,6 +67,7 @@ func TestGetConfigFromSpec(t *testing.T) {
 		assert.NotNil(t, config, "Expected config to be non-nil even with empty annotations")
 		err := config.validate()
 		assert.Error(t, err, "Expected validation to fail for an empty config")
+		assert.ErrorContains(t, err, annotType, "Expected error to mention missing type field")
 	})
 
 	t.Run("get config from spec with partial (invalid) annotations", func(t *testing.T) {
@@ -78,21 +79,14 @@ func TestGetConfigFromSpec(t *testing.T) {
 		}
 
 		expectedConfig := &UnikernelConfig{
-			UnikernelType:    "type1",
-			UnikernelVersion: "",
-			UnikernelCmd:     "",
-			UnikernelBinary:  "",
-			Hypervisor:       "",
-			Initrd:           "",
-			Block:            "",
-			BlkMntPoint:      "",
-			MountRootfs:      "",
+			UnikernelType: "type1",
 		}
 
 		config := getConfigFromSpec(spec)
 		assert.Equal(t, expectedConfig, config, "Expected partial config to match")
 		err := config.validate()
 		assert.Error(t, err, "Expected validation to fail for a partial config")
+		assert.ErrorContains(t, err, annotHypervisor, "Expected error to mention missing hypervisor field")
 	})
 }
 
