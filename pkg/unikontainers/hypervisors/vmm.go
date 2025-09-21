@@ -87,6 +87,16 @@ func NewVMM(vmmType VmmType) (vmm VMM, err error) {
 			return nil, ErrVMMNotInstalled
 		}
 		return &Firecracker{binary: FirecrackerBinary, binaryPath: vmmPath}, nil
+	case CloudHypervisorVmm:
+		chPath, err := exec.LookPath(CloudHypervisorBinary)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find cloud-hypervisor binary: %w", err)
+		}
+		vmm = &CloudHypervisor{
+			binaryPath: chPath,
+			binary:     CloudHypervisorBinary,
+		}
+		return vmm, nil
 	case HedgeVmm:
 		hedge := Hedge{}
 		err := hedge.Ok()
@@ -94,6 +104,7 @@ func NewVMM(vmmType VmmType) (vmm VMM, err error) {
 			return nil, ErrVMMNotInstalled
 		}
 		return &hedge, nil
+
 	default:
 		return nil, fmt.Errorf("vmm \"%s\" is not supported", vmmType)
 	}
