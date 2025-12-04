@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: [base-dind-2204-amd64]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
