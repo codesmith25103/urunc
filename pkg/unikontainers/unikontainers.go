@@ -408,6 +408,33 @@ func (u *Unikontainer) Exec(metrics m.Writer) error {
 	// ExecArgs
 	vmmArgs.Sharedfs = sharedfsArgs
 
+	// vAccel setup
+	vAccelType, vsockSocketPath, rpcAddress, err := resolveVAccelConfig(u.State.Annotations[annotHypervisor], u.Spec.Annotations)
+	if err != nil {
+		uniklog.Debugf("vAccel config: %v", err)
+	}
+
+	if vAccelType == "vsock" && err == nil {
+		// Remove any existing VACCEL_RPC_ADDRESS and set the new value
+		for i, envVar := range unikernelParams.EnvVars {
+			if strings.HasPrefix(envVar, "VACCEL_RPC_ADDRESS"+"=") {
+				unikernelParams.EnvVars = remove(unikernelParams.EnvVars, i)
+				break
+			}
+		}
+		unikernelParams.EnvVars = append(unikernelParams.EnvVars, "VACCEL_RPC_ADDRESS="+rpcAddress)
+
+		// Prepare the guest environment for vAccel vsock communication
+		err = prepareVSockEnvironment(rootfsParams.MonRootfs, u.State.Annotations[annotHypervisor], vsockSocketPath)
+		if err != nil {
+			uniklog.Debugf("failed to prepare all required vsock mounts: %v", err)
+		}
+
+		vmmArgs.VAccelType = vAccelType
+		vmmArgs.VSockDevPath = vsockSocketPath
+		vmmArgs.VSockDevID = idToGuestCID(u.State.ID)
+	}
+
 	// unikernel
 	err = unikernel.Init(unikernelParams)
 	if err == unikernels.ErrUndefinedVersion || err == unikernels.ErrVersionParsing {

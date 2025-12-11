@@ -62,11 +62,18 @@ type FirecrackerNet struct {
 	HostIF   string `json:"host_dev_name"`
 }
 
+type FirecrackerVSockDev struct {
+	GuestCID int    `json:"guest_cid"`
+	UDSPath  string `json:"uds_path"`
+	VSockID  string `json:"vsock_id"`
+}
+
 type FirecrackerConfig struct {
 	Source  FirecrackerBootSource `json:"boot-source"`
 	Machine FirecrackerMachine    `json:"machine-config"`
 	Drives  []FirecrackerDrive    `json:"drives"`
 	NetIfs  []FirecrackerNet      `json:"network-interfaces"`
+	VSock   FirecrackerVSockDev   `json:"vsock,omitempty"`
 }
 
 func (fc *Firecracker) Stop(pid int) error {
@@ -161,11 +168,22 @@ func (fc *Firecracker) Execve(args types.ExecArgs, ukernel types.Unikernel) erro
 		BootArgs:   args.Command,
 		InitrdPath: initrdPath,
 	}
+
+	var FCVSockDev FirecrackerVSockDev
+	if args.VAccelType == "vsock" {
+		FCVSockDev = FirecrackerVSockDev{
+			GuestCID: args.VSockDevID,
+			UDSPath:  args.VSockDevPath + "/vaccel.sock",
+			VSockID:  "root",
+		}
+	}
+
 	FCConfig := &FirecrackerConfig{
 		Source:  FCSource,
 		Machine: FCMachine,
 		Drives:  FCDrives,
 		NetIfs:  FCNet,
+		VSock:   FCVSockDev,
 	}
 	FCConfigJSON, _ := json.Marshal(FCConfig)
 	if err := os.WriteFile(JSONConfigFile, FCConfigJSON, 0o644); err != nil { //nolint: gosec

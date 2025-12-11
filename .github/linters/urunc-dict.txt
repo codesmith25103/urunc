@@ -375,3 +375,6 @@ derr
 ldconfig
 vfsd
 crun
+vaccel
+VACCEL
+vsock

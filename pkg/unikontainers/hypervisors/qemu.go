@@ -130,6 +130,11 @@ func (q *Qemu) Execve(args types.ExecArgs, ukernel types.Unikernel) error {
 		cmdString += " -initrd " + extraMonArgs.ExtraInitrd
 	}
 	cmdString += extraMonArgs.OtherArgs
+
+	if args.VAccelType == "vsock" {
+		cmdString += " -device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=" + fmt.Sprintf("%d", args.VSockDevID)
+	}
+
 	exArgs := strings.Split(cmdString, " ")
 	exArgs = append(exArgs, "-append", args.Command)
 	vmmLog.WithField("qemu command", exArgs).Debug("Ready to execve qemu")
