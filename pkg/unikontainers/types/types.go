@@ -60,11 +60,18 @@ type RootfsParams struct {
 	MonRootfs   string // The rootfs for the monitor process
 }
 
+type Rlimit struct {
+	Type string
+	Hard uint64
+	Soft uint64
+}
+
 // Specific to Linux
 type ProcessConfig struct {
 	UID     uint32 // The uid of the process inside the guest
 	GID     uint32 // The gid of the process inside the guest
 	WorkDir string // The workdir of the process inside the guest
+	Rlimits []Rlimit
 }
 
 // UnikernelParams holds the data required to build the unikernels commandline

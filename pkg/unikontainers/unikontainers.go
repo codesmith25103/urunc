@@ -280,6 +280,16 @@ func (u *Unikontainer) Exec(metrics m.Writer) error {
 		GID:     u.Spec.Process.User.GID,
 		WorkDir: u.Spec.Process.Cwd,
 	}
+
+	if u.Spec.Process.Rlimits != nil {
+		for _, rl := range u.Spec.Process.Rlimits {
+			procAttrs.Rlimits = append(procAttrs.Rlimits, types.Rlimit{
+				Type: rl.Type,
+				Hard: rl.Hard,
+				Soft: rl.Soft,
+			})
+		}
+	}
 	// UnikernelParams
 	// populate unikernel params
 	unikernelParams := types.UnikernelParams{
