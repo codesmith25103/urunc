@@ -69,15 +69,17 @@ type ProcessConfig struct {
 
 // UnikernelParams holds the data required to build the unikernels commandline
 type UnikernelParams struct {
-	CmdLine    []string // The cmdline provided by the image
-	EnvVars    []string // The environment variables provided by the image
-	Monitor    string   // The monitor where guest will execute
-	Version    string   // The version of the unikernel
-	InitrdPath string   // The path to the initrd of the unikernel
-	Net        NetDevParams
-	Block      []BlockDevParams
-	Rootfs     RootfsParams  // Information about rootfs
-	ProcConf   ProcessConfig // Information for the process execution inside the guest
+	CmdLine       []string // The cmdline provided by the image
+	EnvVars       []string // The environment variables provided by the image
+	Monitor       string   // The monitor where guest will execute
+	Version       string   // The version of the unikernel
+	InitrdPath    string   // The path to the initrd of the unikernel
+	Net           NetDevParams
+	Block         []BlockDevParams
+	Rootfs        RootfsParams  // Information about rootfs
+	ProcConf      ProcessConfig // Information for the process execution inside the guest
+	UnikernelPath string
+	Annotations   map[string]string
 }
 
 // ExecArgs holds the data required by Execve to start the VMM
