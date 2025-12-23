@@ -43,8 +43,8 @@ import (
 )
 
 const (
-	monitorRootfsDirName     string = "monRootfs"
-	containerRootfsMountPath string = "/cntrRootfs"
+	monitorRootfsDirName     = "monRootfs"
+	containerRootfsMountPath = "/cntrRootfs"
 )
 
 var uniklog = logrus.WithField("subsystem", "unikontainers")
@@ -283,11 +283,13 @@ func (u *Unikontainer) Exec(metrics m.Writer) error {
 	// UnikernelParams
 	// populate unikernel params
 	unikernelParams := types.UnikernelParams{
-		CmdLine:  u.Spec.Process.Args,
-		EnvVars:  u.Spec.Process.Env,
-		Monitor:  vmmType,
-		Version:  unikernelVersion,
-		ProcConf: procAttrs,
+		CmdLine:       u.Spec.Process.Args,
+		EnvVars:       u.Spec.Process.Env,
+		Monitor:       vmmType,
+		Version:       unikernelVersion,
+		ProcConf:      procAttrs,
+		UnikernelPath: unikernelPath,
+		Annotations:   u.Spec.Annotations,
 	}
 	if len(unikernelParams.CmdLine) == 0 {
 		unikernelParams.CmdLine = strings.Fields(u.State.Annotations[annotCmdLine])
@@ -510,9 +512,10 @@ func (u *Unikontainer) Exec(metrics m.Writer) error {
 func setupUser(user specs.User) error {
 	runtime.LockOSThread()
 	// Set the user for the current go routine to exec the Monitor
-	AddGidsLen := len(user.AdditionalGids)
-	if AddGidsLen > 0 {
-		err := unix.Setgroups(convertUint32ToIntSlice(user.AdditionalGids, AddGidsLen))
+
+	addGidsLen := len(user.AdditionalGids)
+	if addGidsLen > 0 {
+		err := unix.Setgroups(convertUint32ToIntSlice(user.AdditionalGids, addGidsLen))
 		if err != nil {
 			return fmt.Errorf("could not set Additional groups %v : %v", user.AdditionalGids, err)
 		}
@@ -635,7 +638,8 @@ func (u *Unikontainer) Delete() error {
 // joinSandboxNetns joins the network namespace of the sandbox
 // This function should be called only from a locked thread
 // (i.e. runtime. LockOSThread())
-func (u Unikontainer) joinSandboxNetNs() error {
+
+func (u *Unikontainer) joinSandboxNetNs() error {
 	netNsPath, err := findNS(u.Spec.Linux.Namespaces, specs.NetworkNamespace)
 	if err != nil && !errors.Is(err, ErrNotExistingNS) {
 		return err
@@ -1131,7 +1135,8 @@ func (u *Unikontainer) isRunning() bool {
 }
 
 // getNetworkType checks if current container is a knative user-container
-func (u Unikontainer) getNetworkType() string {
+// FIX: Changed to pointer receiver for consistency
+func (u *Unikontainer) getNetworkType() string {
 	if u.Spec.Annotations["io.kubernetes.cri.container-name"] == "user-container" {
 		return "static"
 	}
