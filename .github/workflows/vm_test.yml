@@ -97,9 +97,9 @@ jobs:
       with:
         egress-policy: audit
 
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-    - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+    - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
       with:
         go-version: ${{ inputs.go_version }}
         cache: false
@@ -253,7 +253,16 @@ jobs:
         sudo mv urunc_static_${{ matrix.arch }} /usr/local/bin/urunc
         sudo mv containerd-shim-urunc-v2_static_${{ matrix.arch }} /usr/local/bin/containerd-shim-urunc-v2
         urunc --version
-  
+
+    - name: Configure urunc with debug logging
+      run: |
+        sudo mkdir -p /etc/urunc
+        sudo tee /etc/urunc/config.toml > /dev/null <<'EOF'
+        [log]
+        level = "debug"
+        syslog = true
+        EOF
+
     - name: Add runner user to KVM group
       if: ${{ matrix.arch == 'amd64' }}
       id: kvm-setup
@@ -287,3 +296,9 @@ jobs:
         else
           sudo -E env "PATH=$PATH" "GOROOT=$GOROOT" make ${{ matrix.test }}
         fi
+
+    - name: Dump urunc logs on failure
+      if: failure()
+      run: |
+        echo "=== urunc debug logs ==="
+        sudo journalctl --identifier=urunc --no-pager

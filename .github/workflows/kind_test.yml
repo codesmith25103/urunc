@@ -49,7 +49,7 @@ jobs:
         egress-policy: audit
 
     - name: Checkout repository
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
     - name: Install base dependencies
       run: |
@@ -158,6 +158,17 @@ jobs:
           echo "=== After installation ==="
           ls -la /usr/local/bin/urunc /usr/local/bin/containerd-shim-urunc-v2
           /usr/local/bin/urunc --version
+        '
+
+    - name: Configure urunc with debug logging
+      run: |
+        docker exec urunc-test-control-plane bash -c '
+          mkdir -p /etc/urunc
+          cat > /etc/urunc/config.toml <<EOF
+        [log]
+        level = "debug"
+        syslog = true
+        EOF
         '
 
     - name: Install QEMU inside kind node (amd64 only)
@@ -340,4 +351,6 @@ jobs:
           echo "=== Logs ==="
           kubectl logs hello-spt-rumprun-block || true
         fi
-        
+        echo "=== urunc debug logs ==="
+        docker exec urunc-test-control-plane journalctl --identifier=urunc --no-pager || true
+
