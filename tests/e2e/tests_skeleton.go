@@ -71,9 +71,18 @@ func runTest(tool testTool, t *testing.T) {
 			t.Skipf("Could not find %s", vol.Source)
 		}
 	}
-	err = tool.pullImage()
+	maxRetries := 5
+	for i := 0; i < maxRetries; i++ {
+		err = tool.pullImage()
+		if err == nil {
+			break
+		}
+		t.Logf("Attempt %d/%d failed to pull image %s: %v. Retrying in 2 seconds...", i+1, maxRetries, cntrArgs.Image, err)
+		time.Sleep(2 * time.Second)
+	}
+
 	if err != nil {
-		t.Fatalf("Failed to pull container image: %s - %v", cntrArgs.Image, err)
+		t.Fatalf("Failed to pull container image after %d attempts: %s - %v", maxRetries, cntrArgs.Image, err)
 	}
 	t.Cleanup(func() {
 		err = tool.rmImage()
