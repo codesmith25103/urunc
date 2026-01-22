@@ -331,28 +331,28 @@ rm -f release-amd64-FC-v1.7.0_S5-v0.9.3_VFS_-v1.13.0_QM-v10.1.1-9a44e.tar.gz
 
 After downloading all the binaries, we need to instruct `urunc` about the
 location of the binaries. Therefore, in [`urunc`'s
-configuration](../configuration). there are three three fields that needs to
+configuration](../configuration). there are three fields that need to
 get updated:
 
-1. in each hypervisor the `binary_path` field,
+1. in each monitor the `path` field,
 2. in Qemu, the `data_path` field,
 3. in Virtiofsd, the `path` field needs to get updated.
 
 Therefore, change or append the following lines in `urunc`'s configuration:
 
 ```
-[hypervisors.qemu]
-binary_path = "/opt/urunc/bin/qemu-system-x86_64"
+[monitors.qemu]
+path = "/opt/urunc/bin/qemu-system-x86_64"
 data_path = "/opt/urunc/share/qemu"
 
-[hypervisors.firecracker]
-binary_path = "/opt/urunc/bin/firecracker"
+[monitors.firecracker]
+path = "/opt/urunc/bin/firecracker"
 
-[hypervisors.hvt]
-binary_path = "/opt/urunc/bin/solo5-hvt"
+[monitors.hvt]
+path = "/opt/urunc/bin/solo5-hvt"
 
-[hypervisors.spt]
-binary_path = "/opt/urunc/bin/solo5-spt"
+[monitors.spt]
+path = "/opt/urunc/bin/solo5-spt"
 
 [extra_binaries.virtiofsd]
 path = "/opt/urunc/bin/virtiofsd"
